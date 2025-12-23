@@ -5,6 +5,22 @@ import ComponentListScreen, { componentScreensToListElements } from '../Componen
 
 export const ImageScreens = [
   {
+    name: 'Expensify eReceipt FlashList',
+    route: 'image/ereceipt-flashlist',
+    options: {},
+    getComponent() {
+      return optionalRequire(() => require('../EReceipt/EReceiptFlashListScreen'));
+    },
+  },
+  {
+    name: 'Expensify eReceipt Nested List (Chat)',
+    route: 'image/ereceipt-nested',
+    options: {},
+    getComponent() {
+      return optionalRequire(() => require('../EReceipt/EReceiptNestedListScreen'));
+    },
+  },
+  {
     name: 'Comparison with original image',
     route: 'image/comparison',
     options: {},

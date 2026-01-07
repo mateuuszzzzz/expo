@@ -1,6 +1,14 @@
 import { FlashList, ListRenderItemInfo } from '@shopify/flash-list';
 import React, { useMemo, useState } from 'react';
-import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Dimensions,
+  FlatList,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { variables } from './constants';
 import type { TransactionData } from './EReceipt';
@@ -42,37 +50,64 @@ function keyExtractor(item: TransactionData) {
 
 export default function EReceiptFlashListScreen() {
   const [listSize, setListSize] = useState<ListSize>(250);
+  const [useFlashList, setUseFlashList] = useState(true);
 
   const transactions = useMemo(() => generateMockTransactions(listSize), [listSize]);
 
   return (
     <View style={styles.root}>
-      {/* List Size Selector */}
+      {/* List Type Selector */}
       <View style={styles.selectorContainer}>
-        <Text style={styles.selectorLabel}>Number of eReceipts:</Text>
-        <View style={styles.buttonRow}>
-          {LIST_SIZE_OPTIONS.map((size) => (
-            <TouchableOpacity
-              key={size}
-              style={[styles.sizeButton, listSize === size && styles.sizeButtonActive]}
-              onPress={() => setListSize(size)}>
-              <Text style={[styles.sizeButtonText, listSize === size && styles.sizeButtonTextActive]}>
-                {size}
-              </Text>
-            </TouchableOpacity>
-          ))}
+        <View style={styles.configRow}>
+          <Text style={styles.selectorLabel}>List type:</Text>
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>FlatList</Text>
+            <Switch
+              value={useFlashList}
+              onValueChange={setUseFlashList}
+              trackColor={{ false: '#3A3A3A', true: '#03D47C' }}
+              thumbColor="#FFFFFF"
+            />
+            <Text style={styles.switchLabel}>FlashList</Text>
+          </View>
+        </View>
+
+        <View style={styles.configRow}>
+          <Text style={styles.selectorLabel}>Number of eReceipts:</Text>
+          <View style={styles.buttonRow}>
+            {LIST_SIZE_OPTIONS.map((size) => (
+              <TouchableOpacity
+                key={size}
+                style={[styles.sizeButton, listSize === size && styles.sizeButtonActive]}
+                onPress={() => setListSize(size)}>
+                <Text style={[styles.sizeButtonText, listSize === size && styles.sizeButtonTextActive]}>
+                  {size}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </View>
 
       {/* eReceipt List */}
-      <FlashList
-        data={transactions}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        numColumns={COLUMNS_COUNT}
-        estimatedItemSize={ITEM_HEIGHT * SCALE + 16}
-        contentContainerStyle={styles.listContent}
-      />
+      {useFlashList ? (
+        <FlashList
+          data={transactions}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          numColumns={COLUMNS_COUNT}
+          estimatedItemSize={ITEM_HEIGHT * SCALE + 16}
+          contentContainerStyle={styles.listContent}
+        />
+      ) : (
+        <FlatList
+          data={transactions}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          numColumns={COLUMNS_COUNT}
+          contentContainerStyle={styles.listContent}
+        />
+      )}
     </View>
   );
 }
@@ -88,10 +123,24 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#3A3A3A',
   },
+  configRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   selectorLabel: {
     color: '#FFFFFF',
     fontSize: 14,
-    marginBottom: 8,
+    marginRight: 12,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  switchLabel: {
+    color: '#AAAAAA',
+    fontSize: 12,
   },
   buttonRow: {
     flexDirection: 'row',

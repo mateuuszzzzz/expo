@@ -13,11 +13,27 @@ export const ImageScreens = [
     },
   },
   {
+    name: 'Expensify eReceipt FlashList (Simplified)',
+    route: 'image/ereceipt-flashlist-simplified',
+    options: {},
+    getComponent() {
+      return optionalRequire(() => require('../EReceipt/EReceiptFlashListSimplifiedScreen'));
+    },
+  },
+  {
     name: 'Expensify eReceipt Nested List (Chat)',
     route: 'image/ereceipt-nested',
     options: {},
     getComponent() {
       return optionalRequire(() => require('../EReceipt/EReceiptNestedListScreen'));
+    },
+  },
+  {
+    name: 'Expensify eReceipt Nested (Simplified)',
+    route: 'image/ereceipt-nested-simplified',
+    options: {},
+    getComponent() {
+      return optionalRequire(() => require('../EReceipt/EReceiptNestedListSimplifiedScreen'));
     },
   },
   {

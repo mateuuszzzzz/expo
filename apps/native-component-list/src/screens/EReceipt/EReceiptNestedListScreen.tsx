@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import { FlashList } from '@shopify/flash-list';
+import React, { createContext, useContext, useMemo, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -16,6 +17,9 @@ import EReceiptWithSizeCalculation from './EReceiptWithSizeCalculation';
 import { generateMockTransactions } from './mockData';
 
 const WINDOW_SIZE = Dimensions.get('window');
+
+// Context for nested list type (FlashList vs FlatList)
+const UseFlashListNestedContext = createContext(false);
 
 // Receipt carousel dimensions (matching Expensify)
 const RECEIPT_WIDTH = 180;
@@ -281,9 +285,30 @@ function receiptKeyExtractor(item: TransactionData) {
  * Uses FlatList horizontal (not FlashList) to match Expensify
  */
 function ReceiptCarousel({ transactions }: { transactions: TransactionData[] }) {
+  const useFlashListNested = useContext(UseFlashListNestedContext);
+
   const renderReceiptItem = ({ item }: ListRenderItemInfo<TransactionData>) => (
     <TransactionPreview transaction={item} />
   );
+
+  if (useFlashListNested) {
+    return (
+      <FlashList
+        horizontal
+        data={transactions}
+        renderItem={renderReceiptItem}
+        keyExtractor={receiptKeyExtractor}
+        showsHorizontalScrollIndicator={false}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        snapToInterval={RECEIPT_WIDTH + 8}
+        contentContainerStyle={styles.carouselContent}
+        nestedScrollEnabled
+        bounces={false}
+        estimatedItemSize={RECEIPT_WIDTH + 8}
+      />
+    );
+  }
 
   return (
     <FlatList
@@ -413,6 +438,8 @@ export default function EReceiptNestedListScreen() {
   const [receiptsPerMessage, setReceiptsPerMessage] =
     useState<ReceiptsPerMessageOption>(5);
   const [renderImages, setRenderImages] = useState(true);
+  const [useFlashListMain, setUseFlashListMain] = useState(false);
+  const [useFlashListNested, setUseFlashListNested] = useState(false);
 
   const messages = useMemo(
     () => generateMockMessages(messageCount, receiptsPerMessage),
@@ -426,6 +453,36 @@ export default function EReceiptNestedListScreen() {
       <View style={styles.root}>
         {/* Configuration panel */}
         <View style={styles.configPanel}>
+          {/* Main list type toggle */}
+          <View style={styles.configRow}>
+            <Text style={styles.configLabel}>Main list:</Text>
+            <View style={styles.switchRow}>
+              <Text style={styles.switchLabelType}>FlatList</Text>
+              <Switch
+                value={useFlashListMain}
+                onValueChange={setUseFlashListMain}
+                trackColor={{ false: '#3A3A3A', true: '#03D47C' }}
+                thumbColor="#FFFFFF"
+              />
+              <Text style={styles.switchLabelType}>FlashList</Text>
+            </View>
+          </View>
+
+          {/* Nested list type toggle */}
+          <View style={styles.configRow}>
+            <Text style={styles.configLabel}>Nested lists:</Text>
+            <View style={styles.switchRow}>
+              <Text style={styles.switchLabelType}>FlatList</Text>
+              <Switch
+                value={useFlashListNested}
+                onValueChange={setUseFlashListNested}
+                trackColor={{ false: '#3A3A3A', true: '#03D47C' }}
+                thumbColor="#FFFFFF"
+              />
+              <Text style={styles.switchLabelType}>FlashList</Text>
+            </View>
+          </View>
+
           {/* Image toggle */}
           <View style={styles.configRow}>
             <Text style={styles.configLabel}>expo-image:</Text>
@@ -494,18 +551,31 @@ export default function EReceiptNestedListScreen() {
         </View>
 
         {/* Vertical message list (like Expensify's InvertedFlatList) */}
-        <FlatList
-          inverted
-          data={messages}
-          renderItem={renderMessageItem}
-          keyExtractor={messageKeyExtractor}
-          contentContainerStyle={styles.listContent}
-          // Match Expensify's InvertedFlatList settings
-          removeClippedSubviews
-          windowSize={15}
-          maxToRenderPerBatch={5}
-          initialNumToRender={10}
-        />
+        <UseFlashListNestedContext.Provider value={useFlashListNested}>
+          {useFlashListMain ? (
+            <FlashList
+              inverted
+              data={messages}
+              renderItem={renderMessageItem}
+              keyExtractor={messageKeyExtractor}
+              contentContainerStyle={styles.listContent}
+              estimatedItemSize={400}
+            />
+          ) : (
+            <FlatList
+              inverted
+              data={messages}
+              renderItem={renderMessageItem}
+              keyExtractor={messageKeyExtractor}
+              contentContainerStyle={styles.listContent}
+              // Match Expensify's InvertedFlatList settings
+              removeClippedSubviews
+              windowSize={15}
+              maxToRenderPerBatch={5}
+              initialNumToRender={10}
+            />
+          )}
+        </UseFlashListNestedContext.Provider>
       </View>
     </RenderImagesContext.Provider>
   );
@@ -546,6 +616,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
+  },
+  switchLabelType: {
+    color: '#AAAAAA',
+    fontSize: 12,
   },
   optionButton: {
     paddingHorizontal: 12,
